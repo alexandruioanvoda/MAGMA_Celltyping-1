@@ -20,7 +20,9 @@ This R package contains code used for testing which cell types can explain the h
 
 ## Installation
 
-Before installing this package it is neccesary to install the magma software package. Please download it from https://ctg.cncr.nl/software/magma. The executable should then be copied to /usr/local/bin so that R can find it. Then install this package as follows:
+Before installing this package it is neccesary to install the magma software package. Please download it from https://ctg.cncr.nl/software/magma. Please do note, the magma software which forms the backend of this package was developed by Christian de Leeuw from Daniella Posthuma's lab. If you use this package to generate publishable results then you must cite their publication (listed below).
+
+The executable should be copied to /usr/local/bin so that R can find it. Then install this package as follows:
 
 ```
 install.packages("devtools")
@@ -44,7 +46,10 @@ genome_ref_path = sprintf("%s/g1000_eur",genome_ref_dir)
 
 ### Install and load all the required R packages and data
 
-The EWCE package comes with a celltype specificity dataset which we use as an example.  The One2One package is used to obtain 1:1 orthologs.
+The EWCE package comes with a celltype specificity dataset which we use as an example. If you want to import your own single cell RNA-seq dataset, then this needs converting into CTD format; please see the EWCE tutorial (https://github.com/NathanSkene/EWCE/) for explanation of how to do this.
+
+
+The One2One package is used to obtain 1:1 orthologs.
 
 ```{r, eval=FALSE }
 library(MAGMA.Celltyping)
@@ -102,6 +107,9 @@ if(!file.exists(gwas_sumstats_path)){
 col_headers = format_sumstats_for_magma(gwas_sumstats_path)
 ```
 
+If you are not using a mac to run this code, then `format_sumstats_for_magma` will probably crash. A crossplatform alternative was contributed by another user: `format_sumstats_for_magma_crossplatform
+`
+
 ### Map SNPs to Genes
 
 ```{r, eval=FALSE}
@@ -131,12 +139,41 @@ ctAssocMerged = merge_magma_results(ctAssocsLinear,ctAssocsTop)
 FigsMerged = plot_celltype_associations(ctAssocMerged,ctd=ctd)
 ```
 
-### Run the conditional cell type association analysis
+### Run the conditional cell type association analysis (linear mode)
+
+By default, it is assumed that you want to run the linear enrichment analysis. There are two modes for conditional analyses, you can either control for the top N cell types from the baseline analysis (in which case, set controlTopNcells) or control for specific specified cell types (in which case, set controlledCTs).
 
 ```{r, eval=FALSE }
 # Conditional analysis
-ctCondAssocs = calculate_conditional_celltype_associations(ctd,gwas_sumstats_path,genome_ref_path=genome_ref_path,analysis_name = "Conditional")
+ctCondAssocs = calculate_conditional_celltype_associations(ctd,gwas_sumstats_path,genome_ref_path=genome_ref_path,analysis_name = "Conditional",controlTopNcells=2)
 plot_celltype_associations(ctCondAssocs,ctd=ctd)
+```
+
+Let's try as an alternative to control for expression of both the level 1 pyramidal neuron types at the same time
+
+```{r }
+ctCondAssocs = calculate_conditional_celltype_associations(ctd,gwas_sumstats_path,genome_ref_path=genome_ref_path,analysis_name = "Conditional",controlledCTs=c("pyramidal CA1","pyramidal SS","interneurons"),controlledAnnotLevel=1)
+plot_celltype_associations(ctCondAssocs,ctd=ctd)
+```
+
+Note that Periventricular Microglia (PVM) go from totally non-significant to significant once the neurons are controlled for. Test if this change is significant as follows:
+
+```{r }
+magma1 = ctCondAssocs[[2]]$results[ctCondAssocs[[2]]$results$CONTROL=="BASELINE",]
+magma2 = ctCondAssocs[[2]]$results[ctCondAssocs[[2]]$results$CONTROL=="pyramidal CA1,pyramidal SS,interneurons",]
+resCompared = compare.trait.enrichments(magma1=magma1,magma2=magma2,annotLevel=2,ctd=ctd)
+resCompared[1:3,]
+```
+
+Using this approach we can see that the increasd enrichment is microglia in the controlled analysis is almost significantly increased relative to the baseline analysis.
+
+## Conditional analyses (top 10% mode)
+
+Conditional analyses can also be performed with top 10% mode (although the conditioning is done in linear mode)
+
+```{r }
+ctCondAssocsTopTen = calculate_conditional_celltype_associations(ctd,gwas_sumstats_path,genome_ref_path=genome_ref_path,analysis_name = "Conditional",controlledCTs=c("pyramidal CA1","pyramidal SS","interneurons"),controlledAnnotLevel=1,EnrichmentMode = "Top 10%")
+plot_celltype_associations(ctCondAssocsTopTen,ctd=ctd)
 ```
 
 ## Controlling for a second GWAS
