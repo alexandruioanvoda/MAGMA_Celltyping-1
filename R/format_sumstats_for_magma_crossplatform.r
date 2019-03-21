@@ -1,6 +1,6 @@
 #' Check that sumstats has correct columns and that they are in the correct order for MAGMA and LDSC, pure R version (can be very slow)
 #'
-#' @return col_headers The new column headers for the sumstats file
+#' @return path Path of the processed sumstats file.
 #'
 #' @examples
 #' format_sumstats_for_magma_crossplatform(path)
