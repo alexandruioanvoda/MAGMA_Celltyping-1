@@ -1,3 +1,20 @@
+#' Standardise the column headers in the Summary Statistics files
+#'
+#' Use a reference data table of common column header names (stored in sumstatsColHeaders.rda) convert them to a standard set, i.e. chromosome --> CHR
+#' 
+#' This function does not check that all the required column headers are present.
+#' 
+#' The amended header is returned as a character, and is not written directly back into the file.
+#'
+#' @param first_line Column header (character)
+#'
+#' @return The amended column header (the column headers will not be written directly into the summary statistics file)
+#'
+#' @examples
+#' col_headers = standardise.sumstats.column.headers.crossplatform(first_line)
+#'
+#' @export
+
 standardise.sumstats.column.headers.crossplatform <- function (first_line) 
 {
   column_headers = strsplit(first_line, "\t")[[1]]
